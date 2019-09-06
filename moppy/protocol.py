@@ -8,10 +8,14 @@ MESSAGE_START = 0x4d
 class BaseMoppyCommand(object):
     command = -1
 
-    def to_list(self):
+    @property
+    def length(self) -> int:
+        return len(getattr(self, '__slots__', [])) + 1
+
+    def to_list(self) -> t.List[int]:
         payload = getattr(self, '__slots__', [])
         payload = [getattr(self, slot) for slot in payload]
-        return [self.command] + payload
+        return [self.length, self.command] + payload
 
 
 class SystemPingCommand(BaseMoppyCommand):
@@ -79,7 +83,7 @@ class MoppyMessage(t.NamedTuple):
     sub_address: int
     command: BaseMoppyCommand
 
-    @property
-    def length(self) -> int:
-        return len(self.command.to_list())
-
+    def render(self) -> bytes:
+        full_message = [MESSAGE_START, self.device_address, self.sub_address] + self.command.to_list()
+        byte_message = [val.to_bytes(1, byteorder='little') for val in full_message]
+        return b''.join(byte_message)
