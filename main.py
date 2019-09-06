@@ -28,21 +28,24 @@ if __name__ == '__main__':
 
     ser.write(sequence_start.render())
     with mido.open_input(keyboard) as inport:
-        for message in inport:
-            if message.type == 'note_on':
-                command = DevicePlayNoteCommand(
-                    note_number=message.note,
+        try:
+            for message in inport:
+                if message.type == 'note_on':
+                    command = DevicePlayNoteCommand(
+                        note_number=message.note,
+                    )
+                elif message.type == 'note_off':
+                    command = DeviceStopNote(
+                        note_number=message.note,
+                    )
+                else:
+                    continue
+                message = MoppyMessage(
+                    device_address=1,
+                    sub_address=1,
+                    command=command,
                 )
-            elif message.type == 'note_off':
-                command = DeviceStopNote(
-                    note_number=message.note,
-                )
-            else:
-                continue
-            message = MoppyMessage(
-                device_address=1,
-                sub_address=1,
-                command=command,
-            )
-            ser.write(message.render())
+                ser.write(message.render())
+        except KeyboardInterrupt:
+            pass
     ser.write(sequence_stop.render())
