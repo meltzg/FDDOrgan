@@ -32,7 +32,6 @@ if __name__ == '__main__':
             if message.type == 'note_on':
                 command = DevicePlayNoteCommand(
                     note_number=message.note,
-                    velocity=10
                 )
             elif message.type == 'note_off':
                 command = DeviceStopNote(

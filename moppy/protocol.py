@@ -63,7 +63,7 @@ class DevicePlayNoteCommand(BaseMoppyCommand):
 
     __slots__ = ['note_number', 'velocity']
 
-    def __init__(self, note_number: int, velocity: int) -> None:
+    def __init__(self, note_number: int, velocity: int = 0) -> None:
         self.note_number = note_number
         self.velocity = velocity
 
