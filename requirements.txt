@@ -1,3 +1,5 @@
 pyserial
 mido
 python-rtmidi
+black
+mypy

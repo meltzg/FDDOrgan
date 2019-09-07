@@ -11,8 +11,8 @@ class MoppySerialBridge(object):
         self.wait_for_startup()
 
     def wait_for_startup(self, timeout: int = 10) -> None:
-        for i in range(10):
-            print('attempting to connect to moppy: {}'.format(i))
+        for i in range(timeout):
+            print("attempting to connect to moppy: {}".format(i))
             try:
                 self.ping()
                 return
@@ -23,7 +23,7 @@ class MoppySerialBridge(object):
         ping = p.SystemPingCommand()
         self._send_command(ping, 0, 0)
         if not self.ser.in_waiting:
-            raise ValueError('No response from serial port')
+            raise ValueError("No response from serial port")
         preamble = self.ser.read(p.PREAMBLE_LENGTH)
         assert preamble[0] == p.MESSAGE_START
 
@@ -39,27 +39,24 @@ class MoppySerialBridge(object):
     def stop_sequence(self) -> None:
         self._send_command(p.SystemSequenceStopCommand(), 0, 0)
 
-    def play_note(self, note: int, velocity: int, device_address: int, sub_address: int) -> None:
-        command = p.DevicePlayNoteCommand(
-            note_number=note,
-            velocity=velocity,
-        )
+    def play_note(
+            self, note: int, velocity: int, device_address: int, sub_address: int
+    ) -> None:
+        command = p.DevicePlayNoteCommand(note_number=note, velocity=velocity)
         self._send_command(command, device_address, sub_address)
 
     def stop_note(self, note: int, device_address: int, sub_address: int) -> None:
-        command = p.DeviceStopNoteCommand(
-            note_number=note,
-        )
+        command = p.DeviceStopNoteCommand(note_number=note)
         self._send_command(command, device_address, sub_address)
 
-    def _send_command(self, command: p.BaseMoppyCommand, device_address: int, sub_address: int) -> None:
+    def _send_command(
+            self, command: p.BaseMoppyCommand, device_address: int, sub_address: int
+    ) -> None:
         message = p.MoppyMessage(
-            device_address=device_address,
-            sub_address=sub_address,
-            command=command,
+            device_address=device_address, sub_address=sub_address, command=command
         )
         self._send_message(message)
 
     def _send_message(self, message: p.MoppyMessage) -> None:
-        print('sending message {}'.format(message.render()))
+        print("sending message {}".format(message.render()))
         self.ser.write(message.render())
