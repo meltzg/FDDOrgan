@@ -2,50 +2,14 @@ import mido
 import serial
 from serial.tools.list_ports import comports
 
-from moppy.protocol import (
-    SystemSequenceStartCommand,
-    SystemSequenceStopCommand,
-    DevicePlayNoteCommand,
-    DeviceStopNote,
-    MoppyMessage,
-)
+from controller import FDDOrgan
+from moppy.bridge import MoppySerialBridge
 
 if __name__ == '__main__':
     keyboard = mido.get_input_names()[0]
     port = comports()[0].device
     ser = serial.Serial(port, 57600)
+    bridge = MoppySerialBridge(ser)
 
-    sequence_start = MoppyMessage(
-        device_address=0,
-        sub_address=0,
-        command=SystemSequenceStartCommand()
-    )
-    sequence_stop = MoppyMessage(
-        device_address=0,
-        sub_address=0,
-        command=SystemSequenceStopCommand()
-    )
-
-    ser.write(sequence_start.render())
-    with mido.open_input(keyboard) as inport:
-        try:
-            for message in inport:
-                if message.type == 'note_on':
-                    command = DevicePlayNoteCommand(
-                        note_number=message.note,
-                    )
-                elif message.type == 'note_off':
-                    command = DeviceStopNote(
-                        note_number=message.note,
-                    )
-                else:
-                    continue
-                message = MoppyMessage(
-                    device_address=1,
-                    sub_address=1,
-                    command=command,
-                )
-                ser.write(message.render())
-        except KeyboardInterrupt:
-            pass
-    ser.write(sequence_stop.render())
+    with FDDOrgan(bridge, keyboard) as organ:
+        organ.run()

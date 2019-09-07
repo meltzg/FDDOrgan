@@ -1,12 +1,15 @@
 import typing as t
 
-BYTE_LENGTH = 8
-
 MESSAGE_START = 0x4d
+PREAMBLE_LENGTH = 4
 
 
 class BaseMoppyCommand(object):
     command = -1
+
+    def __repr__(self) -> str:
+        payload_repr = ', '.join('{}={}'.format(slot, getattr(self, slot)) for slot in getattr(self, '__slots__', []))
+        return '[command={}, length={}, payload=[{}]'.format(self.command, self.length, payload_repr)
 
     @property
     def length(self) -> int:
@@ -49,7 +52,7 @@ class DeviceResetCommand(BaseMoppyCommand):
     command = 0x00
 
 
-class DeviceStopNote(BaseMoppyCommand):
+class DeviceStopNoteCommand(BaseMoppyCommand):
     command = 0x08
 
     __slots__ = ['note_number']
