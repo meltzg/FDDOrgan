@@ -36,7 +36,7 @@ class SystemPongCommand(BaseMoppyCommand):
     __slots__ = ["device_address", "min_sub_address", "max_sub_address"]
 
     def __init__(
-            self, device_address: int, min_sub_address: int, max_sub_address: int
+        self, device_address: int, min_sub_address: int, max_sub_address: int
     ) -> None:
         self.device_address = device_address
         self.min_sub_address = min_sub_address
@@ -95,9 +95,9 @@ class MoppyMessage(t.NamedTuple):
 
     def render(self) -> bytes:
         full_message = [
-                           MESSAGE_START,
-                           self.device_address,
-                           self.sub_address,
-                       ] + self.command.to_list()
+            MESSAGE_START,
+            self.device_address,
+            self.sub_address,
+        ] + self.command.to_list()
         byte_message = [val.to_bytes(1, byteorder="little") for val in full_message]
         return b"".join(byte_message)

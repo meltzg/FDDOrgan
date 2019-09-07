@@ -40,7 +40,7 @@ class MoppySerialBridge(object):
         self._send_command(p.SystemSequenceStopCommand(), 0, 0)
 
     def play_note(
-            self, note: int, velocity: int, device_address: int, sub_address: int
+        self, note: int, velocity: int, device_address: int, sub_address: int
     ) -> None:
         command = p.DevicePlayNoteCommand(note_number=note, velocity=velocity)
         self._send_command(command, device_address, sub_address)
@@ -50,7 +50,7 @@ class MoppySerialBridge(object):
         self._send_command(command, device_address, sub_address)
 
     def _send_command(
-            self, command: p.BaseMoppyCommand, device_address: int, sub_address: int
+        self, command: p.BaseMoppyCommand, device_address: int, sub_address: int
     ) -> None:
         message = p.MoppyMessage(
             device_address=device_address, sub_address=sub_address, command=command

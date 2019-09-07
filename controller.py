@@ -1,3 +1,5 @@
+import typing as t
+
 import mido
 
 from moppy.bridge import MoppySerialBridge
@@ -18,6 +20,7 @@ class FDDOrgan(object):
                 self.configuration.max_sub_address + 1,
             )
         )
+        self.note_locations: t.Dict[int, int] = {}
 
     def __enter__(self):
         self.midi_inport = mido.open_input(self.midi_inport_name)
@@ -36,17 +39,37 @@ class FDDOrgan(object):
         try:
             for message in self.midi_inport:
                 if message.type == "note_on":
+                    sub_address = self._claim_available_sub_address(message.note)
+                    if not sub_address:
+                        print("no available sub addresses")
+                        continue
                     self.bridge.play_note(
                         message.note,
                         message.velocity,
                         self.configuration.device_address,
-                        1,
+                        sub_address,
                     )
                 elif message.type == "note_off":
-                    self.bridge.stop_note(
-                        message.note, self.configuration.device_address, 1
-                    )
+                    sub_address = self._free_note(message.note)
+                    if sub_address > 0:
+                        self.bridge.stop_note(
+                            message.note, self.configuration.device_address, sub_address
+                        )
                 else:
                     continue
         except Exception as e:
             print(e)
+
+    def _claim_available_sub_address(self, note_number: int) -> t.Union[int, None]:
+        if not self.available_sub_addresses:
+            return None
+        sub_address = self.available_sub_addresses.pop()
+        self.note_locations[note_number] = sub_address
+        return sub_address
+
+    def _free_note(self, note_number: int) -> int:
+        if note_number in self.note_locations:
+            sub_address = self.note_locations.pop(note_number)
+            self.available_sub_addresses.add(sub_address)
+            return sub_address
+        return -1
