@@ -55,6 +55,8 @@ class FDDOrgan(object):
                         self.bridge.stop_note(
                             message.note, self.configuration.device_address, sub_address
                         )
+                elif message.type == "pitchwheel":
+                    self.bridge.bend_pitch(message.pitch, self.configuration)
                 else:
                     continue
         except Exception as e:

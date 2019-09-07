@@ -83,9 +83,14 @@ class DeviceBendPitch(BaseMoppyCommand):
 
     __slots__ = ["msb", "lsb"]
 
-    def __init__(self, msb: int, lsb: int) -> None:
-        self.msb = msb
-        self.lsb = lsb
+    def __init__(self, bend_amount: int) -> None:
+        bend_bytes = bend_amount.to_bytes(2, byteorder="big", signed=True)
+        self.msb = bend_bytes[0]
+        self.lsb = bend_bytes[1]
+
+    @property
+    def bend_amount(self) -> int:
+        return int.from_bytes([self.msb, self.lsb], byteorder='big', signed=True)
 
 
 class MoppyMessage(t.NamedTuple):

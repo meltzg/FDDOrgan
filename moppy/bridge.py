@@ -49,6 +49,11 @@ class MoppySerialBridge(object):
         command = p.DeviceStopNoteCommand(note_number=note)
         self._send_command(command, device_address, sub_address)
 
+    def bend_pitch(self, bend_amount: int, configuration: p.SystemPongCommand) -> None:
+        command = p.DeviceBendPitch(bend_amount)
+        for i in range(configuration.min_sub_address, configuration.max_sub_address + 1):
+            self._send_command(command, configuration.device_address, i)
+
     def _send_command(
         self, command: p.BaseMoppyCommand, device_address: int, sub_address: int
     ) -> None:
