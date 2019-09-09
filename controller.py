@@ -1,8 +1,11 @@
+import logging
 import typing as t
 
 import mido
 
 from moppy.bridge import MoppySerialBridge
+
+logger = logging.getLogger(__name__)
 
 
 class FDDOrgan(object):
@@ -25,7 +28,7 @@ class FDDOrgan(object):
     def __enter__(self):
         self.midi_inport = mido.open_input(self.midi_inport_name)
         self.bridge.start_sequence()
-        print("organ config: {}".format(self.configuration))
+        logger.info("organ config: %s", self.configuration)
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
@@ -41,7 +44,7 @@ class FDDOrgan(object):
                 if message.type == "note_on":
                     sub_address = self._claim_available_sub_address(message.note)
                     if not sub_address:
-                        print("no available sub addresses")
+                        logger.debug("no available sub addresses")
                         continue
                     self.bridge.play_note(
                         message.note,
@@ -59,8 +62,8 @@ class FDDOrgan(object):
                     self.bridge.bend_pitch(message.pitch, self.configuration)
                 else:
                     continue
-        except Exception as e:
-            print(e)
+        except KeyboardInterrupt as e:
+            pass
 
     def _claim_available_sub_address(self, note_number: int) -> t.Union[int, None]:
         if not self.available_sub_addresses:

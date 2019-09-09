@@ -1,8 +1,11 @@
+import logging
 from time import sleep
 
 from serial import Serial
 
 import moppy.protocol as p
+
+logger = logging.getLogger(__name__)
 
 
 class MoppySerialBridge(object):
@@ -12,7 +15,7 @@ class MoppySerialBridge(object):
 
     def wait_for_startup(self, timeout: int = 10) -> None:
         for i in range(timeout):
-            print("attempting to connect to moppy: {}".format(i))
+            logger.debug("attempting to connect to moppy: %d", i)
             try:
                 self.ping()
                 return
@@ -63,5 +66,5 @@ class MoppySerialBridge(object):
         self._send_message(message)
 
     def _send_message(self, message: p.MoppyMessage) -> None:
-        print("sending message {}".format(message.render()))
+        logger.debug("sending message %s", message.render())
         self.ser.write(message.render())
