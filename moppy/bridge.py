@@ -36,11 +36,17 @@ class MoppySerialBridge(object):
 
         return p.SystemPongCommand(*payload[1:])
 
+    def reset(self) -> None:
+        self._send_command(p.SystemResetCommand(), 0, 0)
+
     def start_sequence(self) -> None:
         self._send_command(p.SystemSequenceStartCommand(), 0, 0)
 
     def stop_sequence(self) -> None:
         self._send_command(p.SystemSequenceStopCommand(), 0, 0)
+
+    def reset_device(self, device_number: int) -> None:
+        self._send_command(p.DeviceResetCommand(), device_number, 0)
 
     def play_note(
         self, note: int, velocity: int, device_address: int, sub_address: int

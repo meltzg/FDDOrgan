@@ -17,7 +17,7 @@ class FDDOrgan(object):
         self.bridge.wait_for_startup()
         self.configuration = self.bridge.ping()
 
-        self.available_sub_addresses = set(
+        self.available_sub_addresses = sorted(
             range(
                 self.configuration.min_sub_address,
                 self.configuration.max_sub_address + 1,
@@ -36,6 +36,7 @@ class FDDOrgan(object):
         self.bridge.stop_sequence()
 
     def run(self) -> None:
+        consecutive_unavailable = 0
         if not self.configuration or not self.midi_inport:
             raise ValueError("Midi port has not been opened")
 
@@ -45,7 +46,11 @@ class FDDOrgan(object):
                     sub_address = self._claim_available_sub_address(message.note)
                     if not sub_address:
                         logger.debug("no available sub addresses")
+                        consecutive_unavailable += 1
+                        if consecutive_unavailable > 3:
+                            self.bridge.reset()
                         continue
+                    consecutive_unavailable = 0
                     self.bridge.play_note(
                         message.note,
                         message.velocity,
@@ -68,13 +73,17 @@ class FDDOrgan(object):
     def _claim_available_sub_address(self, note_number: int) -> t.Union[int, None]:
         if not self.available_sub_addresses:
             return None
-        sub_address = self.available_sub_addresses.pop()
+        sub_address = self.available_sub_addresses[0]
+        self.available_sub_addresses = self.available_sub_addresses[1:]
         self.note_locations[note_number] = sub_address
         return sub_address
 
     def _free_note(self, note_number: int) -> int:
         if note_number in self.note_locations:
             sub_address = self.note_locations.pop(note_number)
-            self.available_sub_addresses.add(sub_address)
+            index = 0
+            while self.available_sub_addresses[index] > sub_address:
+                index += 1
+            self.available_sub_addresses.insert(index, sub_address)
             return sub_address
         return -1
