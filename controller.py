@@ -36,21 +36,18 @@ class FDDOrgan(object):
         self.bridge.stop_sequence()
 
     def run(self) -> None:
-        consecutive_unavailable = 0
+        consecutive_unknown = 0
         if not self.configuration or not self.midi_inport:
             raise ValueError("Midi port has not been opened")
 
         try:
             for message in self.midi_inport:
+                unknown = False
                 if message.type == "note_on":
                     sub_address = self._claim_available_sub_address(message.note)
                     if not sub_address:
                         logger.debug("no available sub addresses")
-                        consecutive_unavailable += 1
-                        if consecutive_unavailable > 3:
-                            self.bridge.reset()
                         continue
-                    consecutive_unavailable = 0
                     self.bridge.play_note(
                         message.note,
                         message.velocity,
@@ -66,7 +63,16 @@ class FDDOrgan(object):
                 elif message.type == "pitchwheel":
                     self.bridge.bend_pitch(message.pitch, self.configuration)
                 else:
-                    continue
+                    unknown = True
+                    logger.debug('unknown command %s', message)
+
+                if not unknown:
+                    consecutive_unknown = 0
+                else:
+                    consecutive_unknown += 1
+                if consecutive_unknown > 3:
+                    consecutive_unknown = 0
+                    self.bridge.reset()
         except KeyboardInterrupt as e:
             pass
 
@@ -81,9 +87,10 @@ class FDDOrgan(object):
     def _free_note(self, note_number: int) -> int:
         if note_number in self.note_locations:
             sub_address = self.note_locations.pop(note_number)
-            index = 0
-            while self.available_sub_addresses[index] > sub_address:
-                index += 1
-            self.available_sub_addresses.insert(index, sub_address)
+            i = 0
+            for i in range(len(self.available_sub_addresses)):
+                if self.available_sub_addresses[i] > sub_address:
+                    break
+            self.available_sub_addresses.insert(i, sub_address)
             return sub_address
         return -1
